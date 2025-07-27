@@ -2,3 +2,25 @@ name: Turrets
 version: '1.0'
 main: com.Lino.turrets.Turrets
 api-version: '1.21'
+author: Lino
+description: Advanced turret system for Minecraft servers
+
+commands:
+  turrets:
+    description: Main turrets command
+    usage: /turrets <give|reload>
+    aliases: [turret]
+
+permissions:
+  turrets.use:
+    description: Allows players to place and use turrets
+    default: true
+  turrets.give:
+    description: Allows players to give themselves turrets
+    default: op
+  turrets.reload:
+    description: Allows players to reload the plugin
+    default: op
+  turrets.admin:
+    description: Allows players to manage all turrets
+    default: op

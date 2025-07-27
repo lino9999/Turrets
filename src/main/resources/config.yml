@@ -1,0 +1,29 @@
+# Turrets Plugin Configuration
+
+# Maximum turrets per player
+max-turrets-per-player: 5
+
+# Debug mode
+debug: false
+
+# Kills required for each level
+levels:
+  2: 500
+  3: 1200
+  4: 2000
+  5: 3000
+  6: 4200
+  7: 5600
+  8: 7200
+  9: 9000
+  10: 11000
+  11: 13200
+  12: 15600
+  13: 18200
+  14: 21000
+  15: 24000
+  16: 27200
+  17: 30600
+  18: 34200
+  19: 38000
+  20: 42000

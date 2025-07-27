@@ -1,0 +1,19 @@
+# Turrets Plugin Messages
+
+# General messages
+no_permission: "&cYou don't have permission to do that!"
+player_only: "&cThis command can only be used by players!"
+plugin_reloaded: "&aPlugin configuration reloaded successfully!"
+
+# Turret messages
+turret:
+  given: "&aYou have received a turret!"
+  placed: "&aTurret placed successfully!"
+  removed: "&cTurret removed!"
+  not_owner: "&cYou are not the owner of this turret!"
+  max_reached: "&cYou have reached the maximum of {max} turrets!"
+  level_up: "&aYour turret has reached level {level}!"
+  out_of_ammo: "&cOne of your turrets is out of ammo!"
+  no_arrows: "&cYou don't have any arrows to reload!"
+  reloaded: "&aReloaded {amount} arrows!"
+  killed_player: "&6{owner}'s turret killed {player}!"
