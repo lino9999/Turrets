@@ -2,10 +2,8 @@ package com.Lino.turrets.tasks;
 
 import com.Lino.turrets.Turrets;
 import com.Lino.turrets.models.Turret;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
+import org.bukkit.*;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -43,38 +41,75 @@ public class TurretShootTask extends BukkitRunnable {
 
         turretLoc.getWorld().playSound(turretLoc, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.0f);
 
-        Vector direction = targetLoc.toVector().subtract(turretLoc.toVector());
-        double distance = turretLoc.distance(targetLoc);
+        Vector direction = targetLoc.toVector().subtract(turretLoc.toVector()).normalize();
 
-        int particles = (int) (distance * 3);
-        for (int i = 0; i < particles; i++) {
-            double progress = (double) i / particles;
-            Location particleLoc = turretLoc.clone().add(direction.clone().multiply(progress));
-            particleLoc.getWorld().spawnParticle(
-                    Particle.DUST,
-                    particleLoc,
-                    1,
-                    0, 0, 0, 0,
-                    new Particle.DustOptions(Color.RED, 1)
-            );
-        }
+        Arrow arrow = turretLoc.getWorld().spawn(turretLoc, Arrow.class);
+        arrow.setVelocity(direction.multiply(3.0));
+        arrow.setDamage(turret.getDamage());
+        arrow.setCritical(true);
+        arrow.setGlowing(turret.getLevel() >= 10);
 
-        double damage = turret.getDamage();
-        target.damage(damage);
+        turretLoc.getWorld().spawnParticle(
+                Particle.SMOKE,
+                turretLoc,
+                10,
+                0.1, 0.1, 0.1,
+                0.05
+        );
 
-        if (target.isDead()) {
-            turret.addKill();
-            plugin.getTurretManager().checkLevelUp(turret);
+        new BukkitRunnable() {
+            int ticks = 0;
 
-            if (target instanceof Player) {
-                Player killed = (Player) target;
-                plugin.getServer().broadcastMessage(
-                        plugin.getMessageManager().getMessage("turret.killed_player",
-                                "{owner}", turret.getOwnerName(),
-                                "{player}", killed.getName())
+            @Override
+            public void run() {
+                if (arrow.isDead() || arrow.isOnGround() || ticks > 100) {
+                    arrow.remove();
+                    cancel();
+                    return;
+                }
+
+                if (arrow.getLocation().distance(target.getLocation()) < 2.0) {
+                    target.damage(turret.getDamage());
+
+                    target.getWorld().spawnParticle(
+                            Particle.DAMAGE_INDICATOR,
+                            target.getLocation().add(0, 1, 0),
+                            5,
+                            0.3, 0.3, 0.3,
+                            0.1
+                    );
+
+                    target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ARROW_HIT, 1.0f, 1.0f);
+
+                    if (target.isDead() || target.getHealth() <= 0) {
+                        turret.addKill();
+                        plugin.getTurretManager().checkLevelUp(turret);
+
+                        if (target instanceof Player) {
+                            Player killed = (Player) target;
+                            plugin.getServer().broadcastMessage(
+                                    plugin.getMessageManager().getMessage("turret.killed_player",
+                                            "{owner}", turret.getOwnerName(),
+                                            "{player}", killed.getName())
+                            );
+                        }
+                    }
+
+                    arrow.remove();
+                    cancel();
+                }
+
+                arrow.getWorld().spawnParticle(
+                        Particle.DUST,
+                        arrow.getLocation(),
+                        1,
+                        0, 0, 0, 0,
+                        new Particle.DustOptions(Color.RED, 0.8f)
                 );
+
+                ticks++;
             }
-        }
+        }.runTaskTimer(plugin, 0L, 1L);
 
         plugin.getHologramManager().updateHologram(turret);
 
