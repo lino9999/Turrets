@@ -24,7 +24,7 @@ public class TurretShootTask extends BukkitRunnable {
             }
 
             LivingEntity target = turret.findNearestTarget();
-            if (target == null) {
+            if (target == null || target.isDead() || !target.isValid()) {
                 continue;
             }
 
@@ -33,24 +33,33 @@ public class TurretShootTask extends BukkitRunnable {
     }
 
     private void shootAt(Turret turret, LivingEntity target) {
+        if (target instanceof Player) {
+            Player playerTarget = (Player) target;
+            if (playerTarget.getUniqueId().equals(turret.getOwnerId())) {
+                return;
+            }
+        }
+
         turret.shoot();
         turret.useAmmo();
 
         Location turretLoc = turret.getLocation().clone().add(0.5, 1.5, 0.5);
-        Location targetLoc = target.getEyeLocation();
+        Location targetLoc = target.getLocation().add(0, target.getHeight() / 2, 0);
 
         turretLoc.getWorld().playSound(turretLoc, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.0f);
 
         Vector direction = targetLoc.toVector().subtract(turretLoc.toVector()).normalize();
 
         Arrow arrow = turretLoc.getWorld().spawn(turretLoc, Arrow.class);
+        arrow.setShooter(null);
         arrow.setVelocity(direction.multiply(3.0));
         arrow.setDamage(turret.getDamage());
         arrow.setCritical(true);
         arrow.setGlowing(turret.getLevel() >= 10);
+        arrow.setGravity(false);
 
         turretLoc.getWorld().spawnParticle(
-                Particle.SMOKE,
+                Particle.NOTE,
                 turretLoc,
                 10,
                 0.1, 0.1, 0.1,
@@ -62,13 +71,23 @@ public class TurretShootTask extends BukkitRunnable {
 
             @Override
             public void run() {
-                if (arrow.isDead() || arrow.isOnGround() || ticks > 100) {
+                if (arrow.isDead() || ticks > 60) {
                     arrow.remove();
                     cancel();
                     return;
                 }
 
-                if (arrow.getLocation().distance(target.getLocation()) < 2.0) {
+                if (!target.isValid() || target.isDead()) {
+                    arrow.remove();
+                    cancel();
+                    return;
+                }
+
+                Vector newDirection = target.getLocation().add(0, target.getHeight() / 2, 0)
+                        .toVector().subtract(arrow.getLocation().toVector()).normalize();
+                arrow.setVelocity(newDirection.multiply(3.0));
+
+                if (arrow.getLocation().distance(target.getLocation()) < 1.5) {
                     target.damage(turret.getDamage());
 
                     target.getWorld().spawnParticle(
@@ -100,7 +119,7 @@ public class TurretShootTask extends BukkitRunnable {
                 }
 
                 arrow.getWorld().spawnParticle(
-                        Particle.DUST,
+                        Particle.FLAME,
                         arrow.getLocation(),
                         1,
                         0, 0, 0, 0,
