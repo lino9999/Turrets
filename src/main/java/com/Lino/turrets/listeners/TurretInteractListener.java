@@ -11,9 +11,9 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public class TurretInteractListener implements Listener {
-    private final TurretsPlugin plugin;
+    private final Turrets plugin;
 
-    public TurretInteractListener(TurretsPlugin plugin) {
+    public TurretInteractListener(Turrets plugin) {
         this.plugin = plugin;
     }
 

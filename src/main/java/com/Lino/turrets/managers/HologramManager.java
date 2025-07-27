@@ -2,7 +2,6 @@ package com.Lino.turrets.managers;
 
 import com.Lino.turrets.Turrets;
 import com.Lino.turrets.models.Turret;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
@@ -50,7 +49,7 @@ public class HologramManager {
     }
 
     private void updateHologramText(ArmorStand nameStand, ArmorStand ammoStand, Turret turret) {
-        nameStand.customName(Component.text("§a" + turret.getOwnerName() + " §7[§6Lv." + turret.getLevel() + "§7]"));
+        nameStand.setCustomName("§a" + turret.getOwnerName() + " §7[§6Lv." + turret.getLevel() + "§7]");
 
         int ammo = turret.getAmmo();
         int maxAmmo = turret.getMaxAmmo();
@@ -67,7 +66,7 @@ public class HologramManager {
         }
         bar.append("§8] §e").append(ammo).append("/").append(maxAmmo);
 
-        ammoStand.customName(Component.text(bar.toString()));
+        ammoStand.setCustomName(bar.toString());
     }
 
     public void removeHologram(UUID turretId) {

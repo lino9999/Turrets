@@ -12,9 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TurretsCommand implements CommandExecutor, TabCompleter {
-    private final TurretsPlugin plugin;
+    private final Turrets plugin;
 
-    public TurretsCommand(TurretsPlugin plugin) {
+    public TurretsCommand(Turrets plugin) {
         this.plugin = plugin;
     }
 

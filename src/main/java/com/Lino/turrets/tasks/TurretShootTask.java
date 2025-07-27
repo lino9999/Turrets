@@ -51,7 +51,7 @@ public class TurretShootTask extends BukkitRunnable {
             double progress = (double) i / particles;
             Location particleLoc = turretLoc.clone().add(direction.clone().multiply(progress));
             particleLoc.getWorld().spawnParticle(
-                    Particle.REDSTONE,
+                    Particle.DUST,
                     particleLoc,
                     1,
                     0, 0, 0, 0,

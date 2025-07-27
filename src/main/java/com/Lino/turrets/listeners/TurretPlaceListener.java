@@ -1,6 +1,7 @@
 package com.Lino.turrets.listeners;
 
 import com.Lino.turrets.Turrets;
+import com.Lino.turrets.models.Turret;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -11,9 +12,9 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class TurretPlaceListener implements Listener {
-    private final TurretsPlugin plugin;
+    private final Turrets plugin;
 
-    public TurretPlaceListener(TurretsPlugin plugin) {
+    public TurretPlaceListener(Turrets plugin) {
         this.plugin = plugin;
     }
 
@@ -54,7 +55,7 @@ public class TurretPlaceListener implements Listener {
             return;
         }
 
-        com.turrets.models.Turret turret = plugin.getTurretManager().getTurretAtLocation(block.getLocation());
+        Turret turret = plugin.getTurretManager().getTurretAtLocation(block.getLocation());
         if (turret == null) {
             return;
         }
