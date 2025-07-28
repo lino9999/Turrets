@@ -1,9 +1,7 @@
 package com.Lino.turrets.models;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import java.util.UUID;
 
 public class Turret {
@@ -109,15 +107,27 @@ public class Turret {
         LivingEntity nearest = null;
         double minDistance = range;
 
-        for (Entity entity : location.getWorld().getNearbyEntities(location, range, range, range)) {
+        Location turretCenter = location.clone().add(0.5, 0.5, 0.5);
+
+        for (Entity entity : turretCenter.getWorld().getNearbyEntities(turretCenter, range, range, range)) {
             if (!(entity instanceof LivingEntity)) continue;
-            if (entity.getUniqueId().equals(ownerId)) continue;
 
             LivingEntity living = (LivingEntity) entity;
-            if (living.isDead()) continue;
 
-            double distance = location.distance(entity.getLocation());
-            if (distance < minDistance) {
+            if (living instanceof Player) {
+                Player player = (Player) living;
+                if (player.getUniqueId().equals(ownerId)) continue;
+                if (player.getGameMode() == org.bukkit.GameMode.CREATIVE ||
+                        player.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+            }
+
+            if (living instanceof ArmorStand ||
+                    living instanceof Villager ||
+                    living.isDead() ||
+                    !living.isValid()) continue;
+
+            double distance = turretCenter.distance(living.getLocation());
+            if (distance <= range && distance < minDistance) {
                 minDistance = distance;
                 nearest = living;
             }

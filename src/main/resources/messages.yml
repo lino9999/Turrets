@@ -14,6 +14,6 @@ turret:
   max_reached: "&cYou have reached the maximum of {max} turrets!"
   level_up: "&aYour turret has reached level {level}!"
   out_of_ammo: "&cOne of your turrets is out of ammo!"
-  no_arrows: "&cYou don't have any arrows to reload!"
-  reloaded: "&aReloaded {amount} arrows!"
+  no_ammo: "&cYou don't have any gold nuggets to reload!"
+  reloaded: "&aReloaded {amount} bullets!"
   killed_player: "&6{owner}'s turret killed {player}!"

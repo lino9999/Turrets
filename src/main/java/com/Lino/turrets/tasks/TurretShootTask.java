@@ -3,7 +3,6 @@ package com.Lino.turrets.tasks;
 import com.Lino.turrets.Turrets;
 import com.Lino.turrets.models.Turret;
 import org.bukkit.*;
-import org.bukkit.entity.Arrow;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -44,53 +43,45 @@ public class TurretShootTask extends BukkitRunnable {
         turret.useAmmo();
 
         Location turretLoc = turret.getLocation().clone().add(0.5, 1.5, 0.5);
-        Location targetLoc = target.getLocation().add(0, target.getHeight() / 2, 0);
 
-        turretLoc.getWorld().playSound(turretLoc, Sound.ENTITY_ARROW_SHOOT, 1.0f, 1.0f);
-
-        Vector direction = targetLoc.toVector().subtract(turretLoc.toVector()).normalize();
-
-        Arrow arrow = turretLoc.getWorld().spawn(turretLoc, Arrow.class);
-        arrow.setShooter(null);
-        arrow.setVelocity(direction.multiply(3.0));
-        arrow.setDamage(turret.getDamage());
-        arrow.setCritical(true);
-        arrow.setGlowing(turret.getLevel() >= 10);
-        arrow.setGravity(false);
+        turretLoc.getWorld().playSound(turretLoc, Sound.ENTITY_BLAZE_SHOOT, 0.5f, 1.5f);
 
         turretLoc.getWorld().spawnParticle(
-                Particle.NOTE,
+                Particle.FLAME,
                 turretLoc,
-                10,
+                20,
                 0.1, 0.1, 0.1,
                 0.05
         );
 
         new BukkitRunnable() {
-            int ticks = 0;
+            Location projectileLoc = turretLoc.clone();
+            double speed = 1.5;
+            int ticksAlive = 0;
+            int maxTicks = 40;
 
             @Override
             public void run() {
-                if (arrow.isDead() || ticks > 60) {
-                    arrow.remove();
+                if (!target.isValid() || target.isDead() || ticksAlive > maxTicks) {
                     cancel();
                     return;
                 }
 
-                if (!target.isValid() || target.isDead()) {
-                    arrow.remove();
-                    cancel();
-                    return;
-                }
+                Location targetLoc = target.getLocation().add(0, target.getHeight() / 2, 0);
+                Vector direction = targetLoc.toVector().subtract(projectileLoc.toVector());
 
-                Vector newDirection = target.getLocation().add(0, target.getHeight() / 2, 0)
-                        .toVector().subtract(arrow.getLocation().toVector()).normalize();
-                arrow.setVelocity(newDirection.multiply(3.0));
-
-                if (arrow.getLocation().distance(target.getLocation()) < 1.5) {
+                if (direction.length() < 1.0) {
                     target.damage(turret.getDamage());
 
-                    target.getWorld().spawnParticle(
+                    targetLoc.getWorld().spawnParticle(
+                            Particle.CRIT,
+                            targetLoc,
+                            15,
+                            0.3, 0.3, 0.3,
+                            0.2
+                    );
+
+                    targetLoc.getWorld().spawnParticle(
                             Particle.DAMAGE_INDICATOR,
                             target.getLocation().add(0, 1, 0),
                             5,
@@ -98,7 +89,7 @@ public class TurretShootTask extends BukkitRunnable {
                             0.1
                     );
 
-                    target.getWorld().playSound(target.getLocation(), Sound.ENTITY_ARROW_HIT, 1.0f, 1.0f);
+                    targetLoc.getWorld().playSound(targetLoc, Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
 
                     if (target.isDead() || target.getHealth() <= 0) {
                         turret.addKill();
@@ -114,19 +105,39 @@ public class TurretShootTask extends BukkitRunnable {
                         }
                     }
 
-                    arrow.remove();
                     cancel();
+                    return;
                 }
 
-                arrow.getWorld().spawnParticle(
+                direction.normalize().multiply(speed);
+                projectileLoc.add(direction);
+
+                if (turret.getLevel() >= 10) {
+                    projectileLoc.getWorld().spawnParticle(
+                            Particle.DUST,
+                            projectileLoc,
+                            3,
+                            0, 0, 0, 0,
+                            new Particle.DustOptions(Color.YELLOW, 1.2f)
+                    );
+                } else {
+                    projectileLoc.getWorld().spawnParticle(
+                            Particle.DUST,
+                            projectileLoc,
+                            3,
+                            0, 0, 0, 0,
+                            new Particle.DustOptions(Color.ORANGE, 1.0f)
+                    );
+                }
+
+                projectileLoc.getWorld().spawnParticle(
                         Particle.FLAME,
-                        arrow.getLocation(),
+                        projectileLoc,
                         1,
-                        0, 0, 0, 0,
-                        new Particle.DustOptions(Color.RED, 0.8f)
+                        0, 0, 0, 0
                 );
 
-                ticks++;
+                ticksAlive++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
 

@@ -43,13 +43,14 @@ public class GuiManager implements Listener {
         ));
         infoItem.setItemMeta(infoMeta);
 
-        ItemStack ammoItem = new ItemStack(Material.ARROW);
+        ItemStack ammoItem = new ItemStack(Material.GOLD_NUGGET);
         ItemMeta ammoMeta = ammoItem.getItemMeta();
         ammoMeta.setDisplayName("§eAmmo Status");
         ammoMeta.setLore(Arrays.asList(
                 "§7Current: §a" + turret.getAmmo() + "/" + turret.getMaxAmmo(),
                 "",
-                "§eClick to reload!"
+                "§eClick to reload!",
+                "§7Requires gold nuggets"
         ));
         ammoItem.setItemMeta(ammoMeta);
 
@@ -91,27 +92,27 @@ public class GuiManager implements Listener {
         int slot = event.getSlot();
 
         if (slot == 13) {
-            int arrowCount = 0;
+            int nuggetCount = 0;
             for (ItemStack item : player.getInventory().getContents()) {
-                if (item != null && item.getType() == Material.ARROW) {
-                    arrowCount += item.getAmount();
+                if (item != null && item.getType() == Material.GOLD_NUGGET) {
+                    nuggetCount += item.getAmount();
                 }
             }
 
-            if (arrowCount == 0) {
-                player.sendMessage(plugin.getMessageManager().getMessage("turret.no_arrows"));
+            if (nuggetCount == 0) {
+                player.sendMessage(plugin.getMessageManager().getMessage("turret.no_ammo"));
                 return;
             }
 
             int maxAmmo = turret.getMaxAmmo();
             int currentAmmo = turret.getAmmo();
             int needed = maxAmmo - currentAmmo;
-            int toUse = Math.min(needed, arrowCount);
+            int toUse = Math.min(needed, nuggetCount);
 
             if (toUse > 0) {
                 int remaining = toUse;
                 for (ItemStack item : player.getInventory().getContents()) {
-                    if (item != null && item.getType() == Material.ARROW) {
+                    if (item != null && item.getType() == Material.GOLD_NUGGET) {
                         int amount = item.getAmount();
                         if (amount <= remaining) {
                             item.setAmount(0);
