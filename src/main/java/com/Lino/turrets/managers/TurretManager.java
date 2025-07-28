@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.NamespacedKey;
 
@@ -19,12 +20,18 @@ public class TurretManager {
     private final Map<UUID, Turret> turrets;
     private final Map<UUID, List<UUID>> playerTurrets;
     private final NamespacedKey turretKey;
+    private final NamespacedKey levelKey;
+    private final NamespacedKey killsKey;
+    private final NamespacedKey ammoKey;
 
     public TurretManager(Turrets plugin) {
         this.plugin = plugin;
         this.turrets = new ConcurrentHashMap<>();
         this.playerTurrets = new ConcurrentHashMap<>();
         this.turretKey = new NamespacedKey(plugin, "turret");
+        this.levelKey = new NamespacedKey(plugin, "turret_level");
+        this.killsKey = new NamespacedKey(plugin, "turret_kills");
+        this.ammoKey = new NamespacedKey(plugin, "turret_ammo");
     }
 
     public void loadTurrets() {
@@ -40,13 +47,34 @@ public class TurretManager {
         plugin.getDatabaseManager().saveTurrets(new ArrayList<>(turrets.values()));
     }
 
-    public Turret createTurret(Player player, Location location) {
-        Turret turret = new Turret(player.getUniqueId(), player.getName(), location);
+    public Turret createTurret(Player player, Location location, ItemStack item) {
+        int level = 1;
+        int kills = 0;
+        int ammo = 0;
+
+        if (item != null && item.hasItemMeta()) {
+            PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
+            if (container.has(levelKey, PersistentDataType.INTEGER)) {
+                level = container.get(levelKey, PersistentDataType.INTEGER);
+            }
+            if (container.has(killsKey, PersistentDataType.INTEGER)) {
+                kills = container.get(killsKey, PersistentDataType.INTEGER);
+            }
+            if (container.has(ammoKey, PersistentDataType.INTEGER)) {
+                ammo = container.get(ammoKey, PersistentDataType.INTEGER);
+            }
+        }
+
+        Turret turret = new Turret(player.getUniqueId(), player.getName(), location, level, kills, ammo);
         turrets.put(turret.getId(), turret);
         playerTurrets.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>()).add(turret.getId());
         plugin.getHologramManager().createHologram(turret);
         saveTurrets();
         return turret;
+    }
+
+    public Turret createTurret(Player player, Location location) {
+        return createTurret(player, location, null);
     }
 
     public void removeTurret(UUID turretId) {
@@ -94,16 +122,31 @@ public class TurretManager {
     }
 
     public ItemStack createTurretItem() {
+        return createTurretItem(1, 0, 0);
+    }
+
+    public ItemStack createTurretItem(int level, int kills, int ammo) {
         ItemStack item = new ItemStack(Material.DISPENSER);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName("§6Turret");
-        meta.setLore(Arrays.asList(
-                "§7Place to deploy",
-                "§7Right-click to manage"
-        ));
+        meta.setDisplayName("§6Turret §7[§eLv." + level + "§7]");
 
-        meta.getPersistentDataContainer().set(turretKey, PersistentDataType.BYTE, (byte) 1);
+        List<String> lore = new ArrayList<>();
+        lore.add("§7Place to deploy");
+        lore.add("§7Right-click to manage");
+        lore.add("");
+        lore.add("§7Level: §e" + level + "/20");
+        lore.add("§7Kills: §c" + kills);
+        lore.add("§7Ammo: §a" + ammo);
+
+        meta.setLore(lore);
+
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+        container.set(turretKey, PersistentDataType.BYTE, (byte) 1);
+        container.set(levelKey, PersistentDataType.INTEGER, level);
+        container.set(killsKey, PersistentDataType.INTEGER, kills);
+        container.set(ammoKey, PersistentDataType.INTEGER, ammo);
+
         item.setItemMeta(meta);
 
         return item;

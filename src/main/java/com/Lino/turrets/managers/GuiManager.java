@@ -59,6 +59,7 @@ public class GuiManager implements Listener {
         removeMeta.setDisplayName("§cRemove Turret");
         removeMeta.setLore(Arrays.asList(
                 "§7Click to remove this turret",
+                "§aProgress will be saved!",
                 "§c§lThis action cannot be undone!"
         ));
         removeItem.setItemMeta(removeMeta);
@@ -132,9 +133,22 @@ public class GuiManager implements Listener {
                 player.closeInventory();
             }
         } else if (slot == 15) {
+            ItemStack turretItem = plugin.getTurretManager().createTurretItem(
+                    turret.getLevel(),
+                    turret.getKills(),
+                    turret.getAmmo()
+            );
+
+            if (player.getInventory().firstEmpty() != -1) {
+                player.getInventory().addItem(turretItem);
+            } else {
+                player.getWorld().dropItemNaturally(player.getLocation(), turretItem);
+            }
+
             plugin.getTurretManager().removeTurret(turretId);
             Location loc = turret.getLocation();
             loc.getBlock().setType(Material.AIR);
+
             player.sendMessage(plugin.getMessageManager().getMessage("turret.removed"));
             player.closeInventory();
         }

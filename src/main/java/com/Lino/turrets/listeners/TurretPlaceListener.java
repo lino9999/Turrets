@@ -6,10 +6,14 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.Iterator;
 
 public class TurretPlaceListener implements Listener {
     private final Turrets plugin;
@@ -43,7 +47,7 @@ public class TurretPlaceListener implements Listener {
         }
 
         Block block = event.getBlock();
-        plugin.getTurretManager().createTurret(player, block.getLocation());
+        plugin.getTurretManager().createTurret(player, block.getLocation(), item);
         player.sendMessage(plugin.getMessageManager().getMessage("turret.placed"));
     }
 
@@ -69,5 +73,19 @@ public class TurretPlaceListener implements Listener {
         }
 
         plugin.getGuiManager().openTurretGui(player, turret);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        Iterator<Block> iterator = event.blockList().iterator();
+        while (iterator.hasNext()) {
+            Block block = iterator.next();
+            if (block.getType() == Material.DISPENSER) {
+                Turret turret = plugin.getTurretManager().getTurretAtLocation(block.getLocation());
+                if (turret != null) {
+                    iterator.remove();
+                }
+            }
+        }
     }
 }

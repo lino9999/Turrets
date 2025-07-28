@@ -25,6 +25,17 @@ public class Turret {
         this.lastShot = 0;
     }
 
+    public Turret(UUID ownerId, String ownerName, Location location, int level, int kills, int ammo) {
+        this.id = UUID.randomUUID();
+        this.ownerId = ownerId;
+        this.ownerName = ownerName;
+        this.location = location;
+        this.level = level;
+        this.kills = kills;
+        this.ammo = ammo;
+        this.lastShot = 0;
+    }
+
     public Turret(UUID id, UUID ownerId, String ownerName, Location location, int level, int kills, int ammo) {
         this.id = id;
         this.ownerId = ownerId;
