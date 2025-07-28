@@ -5,7 +5,6 @@ import com.Lino.turrets.commands.TurretsCommand;
 import com.Lino.turrets.listeners.TurretPlaceListener;
 import com.Lino.turrets.listeners.TurretInteractListener;
 import com.Lino.turrets.managers.*;
-import com.Lino.turrets.tasks.TurretShootTask;
 
 public class Turrets extends JavaPlugin {
     private static Turrets instance;
@@ -36,12 +35,11 @@ public class Turrets extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new TurretPlaceListener(this), this);
         getServer().getPluginManager().registerEvents(new TurretInteractListener(this), this);
-
-        new TurretShootTask(this).runTaskTimer(this, 20L, 20L);
     }
 
     @Override
     public void onDisable() {
+        turretManager.stopAllTasks();
         turretManager.saveTurrets();
         hologramManager.removeAllHolograms();
         databaseManager.close();

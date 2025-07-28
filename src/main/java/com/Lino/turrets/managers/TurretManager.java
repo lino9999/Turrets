@@ -2,6 +2,7 @@ package com.Lino.turrets.managers;
 
 import com.Lino.turrets.Turrets;
 import com.Lino.turrets.models.Turret;
+import com.Lino.turrets.tasks.TurretIndividualTask;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -9,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.NamespacedKey;
 
 import java.util.*;
@@ -19,6 +21,7 @@ public class TurretManager {
     private final Turrets plugin;
     private final Map<UUID, Turret> turrets;
     private final Map<UUID, List<UUID>> playerTurrets;
+    private final Map<UUID, BukkitTask> turretTasks;
     private final NamespacedKey turretKey;
     private final NamespacedKey levelKey;
     private final NamespacedKey killsKey;
@@ -28,6 +31,7 @@ public class TurretManager {
         this.plugin = plugin;
         this.turrets = new ConcurrentHashMap<>();
         this.playerTurrets = new ConcurrentHashMap<>();
+        this.turretTasks = new ConcurrentHashMap<>();
         this.turretKey = new NamespacedKey(plugin, "turret");
         this.levelKey = new NamespacedKey(plugin, "turret_level");
         this.killsKey = new NamespacedKey(plugin, "turret_kills");
@@ -40,11 +44,32 @@ public class TurretManager {
             turrets.put(turret.getId(), turret);
             playerTurrets.computeIfAbsent(turret.getOwnerId(), k -> new ArrayList<>()).add(turret.getId());
             plugin.getHologramManager().createHologram(turret);
+            startTurretTask(turret);
         }
     }
 
     public void saveTurrets() {
         plugin.getDatabaseManager().saveTurrets(new ArrayList<>(turrets.values()));
+    }
+
+    private void startTurretTask(Turret turret) {
+        TurretIndividualTask task = new TurretIndividualTask(plugin, turret);
+        BukkitTask bukkitTask = task.runTaskTimer(plugin, 0L, 1L);
+        turretTasks.put(turret.getId(), bukkitTask);
+    }
+
+    private void stopTurretTask(UUID turretId) {
+        BukkitTask task = turretTasks.remove(turretId);
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    public void stopAllTasks() {
+        for (BukkitTask task : turretTasks.values()) {
+            task.cancel();
+        }
+        turretTasks.clear();
     }
 
     public Turret createTurret(Player player, Location location, ItemStack item) {
@@ -69,6 +94,7 @@ public class TurretManager {
         turrets.put(turret.getId(), turret);
         playerTurrets.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>()).add(turret.getId());
         plugin.getHologramManager().createHologram(turret);
+        startTurretTask(turret);
         saveTurrets();
         return turret;
     }
@@ -85,6 +111,7 @@ public class TurretManager {
                 playerTurretList.remove(turretId);
             }
             plugin.getHologramManager().removeHologram(turretId);
+            stopTurretTask(turretId);
             saveTurrets();
         }
     }

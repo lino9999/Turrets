@@ -1,5 +1,6 @@
 package com.Lino.turrets.models;
 
+import com.Lino.turrets.Turrets;
 import org.bukkit.Location;
 import org.bukkit.entity.*;
 import java.util.UUID;
@@ -94,19 +95,23 @@ public class Turret {
     }
 
     public double getDamage() {
-        return 2.0 + (level - 1) * 0.5;
+        return Turrets.getInstance().getConfigManager().getDamageForLevel(level);
     }
 
     public double getRange() {
-        return 10.0 + (level - 1) * 0.5;
+        return Turrets.getInstance().getConfigManager().getRangeForLevel(level);
     }
 
     public int getMaxAmmo() {
-        return 100 + (level - 1) * 20;
+        return Turrets.getInstance().getConfigManager().getAmmoForLevel(level);
+    }
+
+    public int getShootDelay() {
+        return Turrets.getInstance().getConfigManager().getShootDelayForLevel(level);
     }
 
     public boolean canShoot() {
-        return ammo > 0 && System.currentTimeMillis() - lastShot >= 1000;
+        return ammo > 0 && System.currentTimeMillis() - lastShot >= getShootDelay();
     }
 
     public void shoot() {

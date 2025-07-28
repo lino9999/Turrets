@@ -32,15 +32,25 @@ public class GuiManager implements Listener {
         ItemStack infoItem = new ItemStack(Material.PAPER);
         ItemMeta infoMeta = infoItem.getItemMeta();
         infoMeta.setDisplayName("§6Turret Information");
-        infoMeta.setLore(Arrays.asList(
+
+        List<String> lore = new ArrayList<>(Arrays.asList(
                 "§7Owner: §a" + turret.getOwnerName(),
                 "§7Level: §e" + turret.getLevel() + "/20",
                 "§7Kills: §c" + turret.getKills(),
                 "§7Damage: §c" + String.format("%.1f", turret.getDamage()),
                 "§7Range: §b" + String.format("%.1f", turret.getRange()) + " blocks",
-                "",
-                "§7Next level at: §e" + plugin.getConfigManager().getKillsForLevel(turret.getLevel() + 1) + " kills"
+                "§7Fire Rate: §d" + String.format("%.2f", 1000.0 / turret.getShootDelay()) + " shots/sec"
         ));
+
+        if (turret.getLevel() < 20) {
+            lore.add("");
+            lore.add("§7Next level at: §e" + plugin.getConfigManager().getKillsForLevel(turret.getLevel() + 1) + " kills");
+        } else {
+            lore.add("");
+            lore.add("§6§lMAX LEVEL REACHED!");
+        }
+
+        infoMeta.setLore(lore);
         infoItem.setItemMeta(infoMeta);
 
         ItemStack ammoItem = new ItemStack(Material.GOLD_NUGGET);

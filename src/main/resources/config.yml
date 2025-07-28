@@ -1,29 +1,127 @@
 # Turrets Plugin Configuration
 
-# Maximum turrets per player
 max-turrets-per-player: 5
 
-# Debug mode
 debug: false
 
-# Kills required for each level
 levels:
-  2: 500
-  3: 1200
-  4: 2000
-  5: 3000
-  6: 4200
-  7: 5600
-  8: 7200
-  9: 9000
-  10: 11000
-  11: 13200
-  12: 15600
-  13: 18200
-  14: 21000
-  15: 24000
-  16: 27200
-  17: 30600
-  18: 34200
-  19: 38000
-  20: 42000
+  1:
+    kills: 0
+    damage: 2.0
+    ammo: 300
+    range: 10.0
+    shoot-delay: 1000
+  2:
+    kills: 500
+    damage: 2.5
+    ammo: 360
+    range: 10.5
+    shoot-delay: 950
+  3:
+    kills: 1200
+    damage: 3.0
+    ammo: 420
+    range: 11.0
+    shoot-delay: 900
+  4:
+    kills: 2000
+    damage: 3.5
+    ammo: 480
+    range: 11.5
+    shoot-delay: 850
+  5:
+    kills: 3000
+    damage: 4.0
+    ammo: 540
+    range: 12.0
+    shoot-delay: 800
+  6:
+    kills: 4200
+    damage: 4.5
+    ammo: 600
+    range: 12.5
+    shoot-delay: 750
+  7:
+    kills: 5600
+    damage: 5.0
+    ammo: 660
+    range: 13.0
+    shoot-delay: 700
+  8:
+    kills: 7200
+    damage: 5.5
+    ammo: 720
+    range: 13.5
+    shoot-delay: 650
+  9:
+    kills: 9000
+    damage: 6.0
+    ammo: 780
+    range: 14.0
+    shoot-delay: 600
+  10:
+    kills: 11000
+    damage: 6.5
+    ammo: 840
+    range: 14.5
+    shoot-delay: 550
+  11:
+    kills: 13200
+    damage: 7.0
+    ammo: 900
+    range: 15.0
+    shoot-delay: 500
+  12:
+    kills: 15600
+    damage: 7.5
+    ammo: 960
+    range: 15.5
+    shoot-delay: 450
+  13:
+    kills: 18200
+    damage: 8.0
+    ammo: 1020
+    range: 16.0
+    shoot-delay: 400
+  14:
+    kills: 21000
+    damage: 8.5
+    ammo: 1080
+    range: 16.5
+    shoot-delay: 350
+  15:
+    kills: 24000
+    damage: 9.0
+    ammo: 1140
+    range: 17.0
+    shoot-delay: 300
+  16:
+    kills: 27200
+    damage: 9.5
+    ammo: 1200
+    range: 17.5
+    shoot-delay: 250
+  17:
+    kills: 30600
+    damage: 10.0
+    ammo: 1260
+    range: 18.0
+    shoot-delay: 200
+  18:
+    kills: 34200
+    damage: 10.5
+    ammo: 1320
+    range: 18.5
+    shoot-delay: 150
+  19:
+    kills: 38000
+    damage: 11.0
+    ammo: 1380
+    range: 19.0
+    shoot-delay: 100
+  20:
+    kills: 42000
+    damage: 11.5
+    ammo: 1440
+    range: 19.5
+    shoot-delay: 50

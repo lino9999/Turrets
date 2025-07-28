@@ -8,39 +8,40 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-public class TurretShootTask extends BukkitRunnable {
+public class TurretIndividualTask extends BukkitRunnable {
     private final Turrets plugin;
-    private int tickCounter = 0;
+    private final Turret turret;
+    private int soundTicks = 0;
 
-    public TurretShootTask(Turrets plugin) {
+    public TurretIndividualTask(Turrets plugin, Turret turret) {
         this.plugin = plugin;
+        this.turret = turret;
     }
 
     @Override
     public void run() {
-        tickCounter++;
-
-        for (Turret turret : plugin.getTurretManager().getAllTurrets()) {
-            if (tickCounter % 10 == 0) {
-                Location turretLoc = turret.getLocation().clone().add(0.5, 0.5, 0.5);
-                turretLoc.getWorld().playSound(turretLoc, Sound.BLOCK_BEACON_AMBIENT, 0.2f, 0.5f);
-            }
-
-            if (!turret.canShoot()) {
-                continue;
-            }
-
-            LivingEntity target = turret.findNearestTarget();
-            if (target == null || target.isDead() || !target.isValid()) {
-                continue;
-            }
-
-            shootAt(turret, target);
+        if (plugin.getTurretManager().getTurret(turret.getId()) == null) {
+            cancel();
+            return;
         }
 
-        if (tickCounter >= 10) {
-            tickCounter = 0;
+        soundTicks++;
+        if (soundTicks >= 10) {
+            Location turretLoc = turret.getLocation().clone().add(0.5, 0.5, 0.5);
+            turretLoc.getWorld().playSound(turretLoc, Sound.BLOCK_BEACON_AMBIENT, 0.2f, 0.5f);
+            soundTicks = 0;
         }
+
+        if (!turret.canShoot()) {
+            return;
+        }
+
+        LivingEntity target = turret.findNearestTarget();
+        if (target == null || target.isDead() || !target.isValid()) {
+            return;
+        }
+
+        shootAt(turret, target);
     }
 
     private void shootAt(Turret turret, LivingEntity target) {

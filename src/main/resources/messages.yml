@@ -1,11 +1,9 @@
 # Turrets Plugin Messages
 
-# General messages
 no_permission: "&cYou don't have permission to do that!"
 player_only: "&cThis command can only be used by players!"
 plugin_reloaded: "&aPlugin configuration reloaded successfully!"
 
-# Turret messages
 turret:
   given: "&aYou have received a turret!"
   placed: "&aTurret placed successfully!"
