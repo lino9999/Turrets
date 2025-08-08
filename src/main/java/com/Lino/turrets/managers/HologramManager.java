@@ -4,6 +4,7 @@ import com.Lino.turrets.Turrets;
 import com.Lino.turrets.models.Turret;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import java.util.HashMap;
@@ -20,7 +21,18 @@ public class HologramManager {
     }
 
     public void createHologram(Turret turret) {
+        removeHologram(turret.getId());
+
         Location loc = turret.getLocation().clone().add(0.5, 2, 0.5);
+
+        for (Entity entity : loc.getWorld().getNearbyEntities(loc, 1, 3, 1)) {
+            if (entity instanceof ArmorStand) {
+                ArmorStand stand = (ArmorStand) entity;
+                if (!stand.isVisible() && stand.isMarker()) {
+                    stand.remove();
+                }
+            }
+        }
 
         ArmorStand nameStand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
         nameStand.setCustomNameVisible(true);
@@ -43,13 +55,16 @@ public class HologramManager {
 
     public void updateHologram(Turret turret) {
         ArmorStand[] stands = holograms.get(turret.getId());
-        if (stands != null && stands.length == 2) {
+        if (stands != null && stands.length == 2 && stands[0] != null && stands[1] != null && !stands[0].isDead() && !stands[1].isDead()) {
             updateHologramText(stands[0], stands[1], turret);
+        } else {
+            createHologram(turret);
         }
     }
 
     private void updateHologramText(ArmorStand nameStand, ArmorStand ammoStand, Turret turret) {
-        nameStand.setCustomName("§a" + turret.getOwnerName() + " §7[§6Lv." + turret.getLevel() + "§7]");
+        String gradient = plugin.getMessageManager().applyGradient(turret.getOwnerName(), "#00ff00", "#ffff00");
+        nameStand.setCustomName(gradient + " §7[§6Lv." + turret.getLevel() + "§7]");
 
         int ammo = turret.getAmmo();
         int maxAmmo = turret.getMaxAmmo();
@@ -82,9 +97,11 @@ public class HologramManager {
 
     public void removeAllHolograms() {
         for (ArmorStand[] stands : holograms.values()) {
-            for (ArmorStand stand : stands) {
-                if (stand != null && !stand.isDead()) {
-                    stand.remove();
+            if (stands != null) {
+                for (ArmorStand stand : stands) {
+                    if (stand != null && !stand.isDead()) {
+                        stand.remove();
+                    }
                 }
             }
         }

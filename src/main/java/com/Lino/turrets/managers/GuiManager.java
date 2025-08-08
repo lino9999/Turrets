@@ -27,11 +27,13 @@ public class GuiManager implements Listener {
     }
 
     public void openTurretGui(Player player, Turret turret) {
-        Inventory gui = Bukkit.createInventory(null, 27, "§6Turret Management");
+        String title = plugin.getMessageManager().applyGradient("Turret Management", "#ff8800", "#ffff00");
+        Inventory gui = Bukkit.createInventory(null, 27, title);
 
         ItemStack infoItem = new ItemStack(Material.PAPER);
         ItemMeta infoMeta = infoItem.getItemMeta();
-        infoMeta.setDisplayName("§6Turret Information");
+        String infoTitle = plugin.getMessageManager().applyGradient("Turret Information", "#00ff00", "#00ffff");
+        infoMeta.setDisplayName(infoTitle);
 
         List<String> lore = new ArrayList<>(Arrays.asList(
                 "§7Owner: §a" + turret.getOwnerName(),
@@ -47,7 +49,8 @@ public class GuiManager implements Listener {
             lore.add("§7Next level at: §e" + plugin.getConfigManager().getKillsForLevel(turret.getLevel() + 1) + " kills");
         } else {
             lore.add("");
-            lore.add("§6§lMAX LEVEL REACHED!");
+            String maxLevel = plugin.getMessageManager().applyGradient("MAX LEVEL REACHED!", "#ffff00", "#ff00ff");
+            lore.add(maxLevel);
         }
 
         infoMeta.setLore(lore);
@@ -90,7 +93,9 @@ public class GuiManager implements Listener {
         UUID turretId = openGuis.get(player.getUniqueId());
 
         if (turretId == null) return;
-        if (!event.getView().getTitle().equals("§6Turret Management")) return;
+
+        String expectedTitle = plugin.getMessageManager().applyGradient("Turret Management", "#ff8800", "#ffff00");
+        if (!event.getView().getTitle().equals(expectedTitle)) return;
 
         event.setCancelled(true);
 

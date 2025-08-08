@@ -53,6 +53,7 @@ public class TurretManager {
     }
 
     private void startTurretTask(Turret turret) {
+        stopTurretTask(turret.getId());
         TurretIndividualTask task = new TurretIndividualTask(plugin, turret);
         BukkitTask bukkitTask = task.runTaskTimer(plugin, 0L, 1L);
         turretTasks.put(turret.getId(), bukkitTask);
@@ -60,14 +61,16 @@ public class TurretManager {
 
     private void stopTurretTask(UUID turretId) {
         BukkitTask task = turretTasks.remove(turretId);
-        if (task != null) {
+        if (task != null && !task.isCancelled()) {
             task.cancel();
         }
     }
 
     public void stopAllTasks() {
-        for (BukkitTask task : turretTasks.values()) {
-            task.cancel();
+        for (Map.Entry<UUID, BukkitTask> entry : turretTasks.entrySet()) {
+            if (entry.getValue() != null && !entry.getValue().isCancelled()) {
+                entry.getValue().cancel();
+            }
         }
         turretTasks.clear();
     }
@@ -109,6 +112,9 @@ public class TurretManager {
             List<UUID> playerTurretList = playerTurrets.get(turret.getOwnerId());
             if (playerTurretList != null) {
                 playerTurretList.remove(turretId);
+                if (playerTurretList.isEmpty()) {
+                    playerTurrets.remove(turret.getOwnerId());
+                }
             }
             plugin.getHologramManager().removeHologram(turretId);
             stopTurretTask(turretId);
@@ -145,7 +151,7 @@ public class TurretManager {
     }
 
     public Collection<Turret> getAllTurrets() {
-        return turrets.values();
+        return new ArrayList<>(turrets.values());
     }
 
     public ItemStack createTurretItem() {
@@ -156,7 +162,8 @@ public class TurretManager {
         ItemStack item = new ItemStack(Material.DISPENSER);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName("§6Turret §7[§eLv." + level + "§7]");
+        String name = plugin.getMessageManager().applyGradient("Turret", "#ff8800", "#ffff00");
+        meta.setDisplayName(name + " §7[§eLv." + level + "§7]");
 
         List<String> lore = new ArrayList<>();
         lore.add("§7Place to deploy");
@@ -196,8 +203,7 @@ public class TurretManager {
 
             Player owner = plugin.getServer().getPlayer(turret.getOwnerId());
             if (owner != null && owner.isOnline()) {
-                owner.sendMessage(plugin.getMessageManager().getMessage("turret.level_up")
-                        .replace("{level}", String.valueOf(turret.getLevel())));
+                owner.sendMessage(plugin.getMessageManager().getMessage("turret.level_up", "{level}", String.valueOf(turret.getLevel())));
             }
         }
     }

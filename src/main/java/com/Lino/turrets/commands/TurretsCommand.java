@@ -69,8 +69,11 @@ public class TurretsCommand implements CommandExecutor, TabCompleter {
                     target.getInventory().addItem(plugin.getTurretManager().createTurretItem(level, 0, plugin.getConfigManager().getAmmoForLevel(level)));
                 }
 
-                sender.sendMessage("§aGave " + amount + " level " + level + " turret(s) to " + target.getName() + "!");
-                target.sendMessage("§aYou received " + amount + " level " + level + " turret(s)!");
+                String giveMsg = plugin.getMessageManager().applyGradient("Gave " + amount + " level " + level + " turret(s) to " + target.getName() + "!", "#00ff00", "#00ffff");
+                sender.sendMessage(giveMsg);
+
+                String receiveMsg = plugin.getMessageManager().applyGradient("You received " + amount + " level " + level + " turret(s)!", "#00ff00", "#ffff00");
+                target.sendMessage(receiveMsg);
                 return true;
 
             case "reload":
@@ -90,7 +93,8 @@ public class TurretsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage("§6§lTurrets Commands:");
+        String title = plugin.getMessageManager().applyGradient("Turrets Commands:", "#ff8800", "#ffff00");
+        sender.sendMessage(title);
         sender.sendMessage("§e/turrets give <player> <level> <amount> §7- Give turret to player");
         sender.sendMessage("§e/turrets reload §7- Reload configuration");
     }

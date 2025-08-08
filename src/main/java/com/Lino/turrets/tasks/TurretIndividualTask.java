@@ -8,27 +8,33 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.lang.ref.WeakReference;
+
 public class TurretIndividualTask extends BukkitRunnable {
     private final Turrets plugin;
-    private final Turret turret;
+    private final WeakReference<Turret> turretRef;
     private int soundTicks = 0;
+    private static final Particle.DustOptions ORANGE_DUST = new Particle.DustOptions(Color.ORANGE, 1.0f);
+    private static final Particle.DustOptions YELLOW_DUST = new Particle.DustOptions(Color.YELLOW, 1.2f);
 
     public TurretIndividualTask(Turrets plugin, Turret turret) {
         this.plugin = plugin;
-        this.turret = turret;
+        this.turretRef = new WeakReference<>(turret);
     }
 
     @Override
     public void run() {
-        if (plugin.getTurretManager().getTurret(turret.getId()) == null) {
+        Turret turret = turretRef.get();
+
+        if (turret == null || plugin.getTurretManager().getTurret(turret.getId()) == null) {
             cancel();
             return;
         }
 
         soundTicks++;
-        if (soundTicks >= 10) {
+        if (soundTicks >= 200) {
             Location turretLoc = turret.getLocation().clone().add(0.5, 0.5, 0.5);
-            turretLoc.getWorld().playSound(turretLoc, Sound.BLOCK_BEACON_AMBIENT, 0.2f, 0.5f);
+            turretLoc.getWorld().playSound(turretLoc, Sound.BLOCK_BEACON_AMBIENT, 0.15f, 0.5f);
             soundTicks = 0;
         }
 
@@ -56,103 +62,12 @@ public class TurretIndividualTask extends BukkitRunnable {
         turret.useAmmo();
 
         Location turretLoc = turret.getLocation().clone().add(0.5, 1.5, 0.5);
+        World world = turretLoc.getWorld();
 
-        turretLoc.getWorld().playSound(turretLoc, Sound.ENTITY_BLAZE_SHOOT, 0.5f, 1.5f);
+        world.playSound(turretLoc, Sound.ENTITY_BLAZE_SHOOT, 0.4f, 1.5f);
+        world.spawnParticle(Particle.FLAME, turretLoc, 10, 0.1, 0.1, 0.1, 0.03);
 
-        turretLoc.getWorld().spawnParticle(
-                Particle.FLAME,
-                turretLoc,
-                20,
-                0.1, 0.1, 0.1,
-                0.05
-        );
-
-        new BukkitRunnable() {
-            Location projectileLoc = turretLoc.clone();
-            double speed = 1.5;
-            int ticksAlive = 0;
-            int maxTicks = 40;
-
-            @Override
-            public void run() {
-                if (!target.isValid() || target.isDead() || ticksAlive > maxTicks) {
-                    cancel();
-                    return;
-                }
-
-                Location targetLoc = target.getLocation().add(0, target.getHeight() / 2, 0);
-                Vector direction = targetLoc.toVector().subtract(projectileLoc.toVector());
-
-                if (direction.length() < 1.0) {
-                    target.damage(turret.getDamage());
-
-                    targetLoc.getWorld().spawnParticle(
-                            Particle.CRIT,
-                            targetLoc,
-                            15,
-                            0.3, 0.3, 0.3,
-                            0.2
-                    );
-
-                    targetLoc.getWorld().spawnParticle(
-                            Particle.DAMAGE_INDICATOR,
-                            target.getLocation().add(0, 1, 0),
-                            5,
-                            0.3, 0.3, 0.3,
-                            0.1
-                    );
-
-                    targetLoc.getWorld().playSound(targetLoc, Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
-
-                    if (target.isDead() || target.getHealth() <= 0) {
-                        turret.addKill();
-                        plugin.getTurretManager().checkLevelUp(turret);
-
-                        if (target instanceof Player) {
-                            Player killed = (Player) target;
-                            plugin.getServer().broadcastMessage(
-                                    plugin.getMessageManager().getMessage("turret.killed_player",
-                                            "{owner}", turret.getOwnerName(),
-                                            "{player}", killed.getName())
-                            );
-                        }
-                    }
-
-                    cancel();
-                    return;
-                }
-
-                direction.normalize().multiply(speed);
-                projectileLoc.add(direction);
-
-                if (turret.getLevel() >= 10) {
-                    projectileLoc.getWorld().spawnParticle(
-                            Particle.DUST,
-                            projectileLoc,
-                            3,
-                            0, 0, 0, 0,
-                            new Particle.DustOptions(Color.YELLOW, 1.2f)
-                    );
-                } else {
-                    projectileLoc.getWorld().spawnParticle(
-                            Particle.DUST,
-                            projectileLoc,
-                            3,
-                            0, 0, 0, 0,
-                            new Particle.DustOptions(Color.ORANGE, 1.0f)
-                    );
-                }
-
-                projectileLoc.getWorld().spawnParticle(
-                        Particle.FLAME,
-                        projectileLoc,
-                        1,
-                        0, 0, 0, 0
-                );
-
-                ticksAlive++;
-            }
-        }.runTaskTimer(plugin, 0L, 1L);
+        new ProjectileTask(plugin, turret, target, turretLoc.clone()).runTaskTimer(plugin, 0L, 1L);
 
         plugin.getHologramManager().updateHologram(turret);
 
@@ -161,6 +76,76 @@ public class TurretIndividualTask extends BukkitRunnable {
             if (owner != null && owner.isOnline()) {
                 owner.sendMessage(plugin.getMessageManager().getMessage("turret.out_of_ammo"));
             }
+        }
+    }
+
+    private static class ProjectileTask extends BukkitRunnable {
+        private final Turrets plugin;
+        private final WeakReference<Turret> turretRef;
+        private final WeakReference<LivingEntity> targetRef;
+        private Location projectileLoc;
+        private final double speed = 1.5;
+        private int ticksAlive = 0;
+        private static final int MAX_TICKS = 40;
+
+        ProjectileTask(Turrets plugin, Turret turret, LivingEntity target, Location startLoc) {
+            this.plugin = plugin;
+            this.turretRef = new WeakReference<>(turret);
+            this.targetRef = new WeakReference<>(target);
+            this.projectileLoc = startLoc;
+        }
+
+        @Override
+        public void run() {
+            LivingEntity target = targetRef.get();
+            Turret turret = turretRef.get();
+
+            if (target == null || turret == null || !target.isValid() || target.isDead() || ticksAlive > MAX_TICKS) {
+                cancel();
+                return;
+            }
+
+            Location targetLoc = target.getLocation().add(0, target.getHeight() / 2, 0);
+            Vector direction = targetLoc.toVector().subtract(projectileLoc.toVector());
+
+            if (direction.length() < 1.0) {
+                target.damage(turret.getDamage());
+
+                World world = targetLoc.getWorld();
+                world.spawnParticle(Particle.CRIT, targetLoc, 10, 0.2, 0.2, 0.2, 0.1);
+                world.spawnParticle(Particle.DAMAGE_INDICATOR, target.getLocation().add(0, 1, 0), 3, 0.2, 0.2, 0.2, 0.05);
+                world.playSound(targetLoc, Sound.ENTITY_PLAYER_HURT, 0.8f, 1.0f);
+
+                if (target.isDead() || target.getHealth() <= 0) {
+                    turret.addKill();
+                    plugin.getTurretManager().checkLevelUp(turret);
+
+                    if (target instanceof Player) {
+                        Player killed = (Player) target;
+                        plugin.getServer().broadcastMessage(
+                                plugin.getMessageManager().getMessage("turret.killed_player",
+                                        "{owner}", turret.getOwnerName(),
+                                        "{player}", killed.getName())
+                        );
+                    }
+                }
+
+                cancel();
+                return;
+            }
+
+            direction.normalize().multiply(speed);
+            projectileLoc.add(direction);
+
+            World world = projectileLoc.getWorld();
+            Particle.DustOptions dust = turret.getLevel() >= 10 ? YELLOW_DUST : ORANGE_DUST;
+            world.spawnParticle(Particle.DUST, projectileLoc, 2, 0, 0, 0, 0, dust);
+
+            if (ticksAlive % 2 == 0) {
+                world.spawnParticle(Particle.FLAME, projectileLoc, 1, 0, 0, 0, 0);
+            }
+
+            ticksAlive++;
         }
     }
 }
