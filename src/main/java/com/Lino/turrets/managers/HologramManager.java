@@ -23,16 +23,18 @@ public class HologramManager {
     public void createHologram(Turret turret) {
         removeHologram(turret.getId());
 
-        Location loc = turret.getLocation().clone().add(0.5, 2, 0.5);
+        Location baseLoc = turret.getLocation().clone().add(0.5, 0, 0.5);
 
-        for (Entity entity : loc.getWorld().getNearbyEntities(loc, 1, 3, 1)) {
+        for (Entity entity : baseLoc.getWorld().getNearbyEntities(baseLoc, 1, 4, 1)) {
             if (entity instanceof ArmorStand) {
                 ArmorStand stand = (ArmorStand) entity;
-                if (!stand.isVisible() && stand.isMarker()) {
+                if (!stand.isVisible() && stand.isMarker() && stand.isCustomNameVisible()) {
                     stand.remove();
                 }
             }
         }
+
+        Location loc = turret.getLocation().clone().add(0.5, 2, 0.5);
 
         ArmorStand nameStand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
         nameStand.setCustomNameVisible(true);
@@ -55,11 +57,12 @@ public class HologramManager {
 
     public void updateHologram(Turret turret) {
         ArmorStand[] stands = holograms.get(turret.getId());
-        if (stands != null && stands.length == 2 && stands[0] != null && stands[1] != null && !stands[0].isDead() && !stands[1].isDead()) {
-            updateHologramText(stands[0], stands[1], turret);
-        } else {
+        if (stands == null || stands.length != 2 || stands[0] == null || stands[1] == null || stands[0].isDead() || stands[1].isDead()) {
             createHologram(turret);
+            return;
         }
+
+        updateHologramText(stands[0], stands[1], turret);
     }
 
     private void updateHologramText(ArmorStand nameStand, ArmorStand ammoStand, Turret turret) {

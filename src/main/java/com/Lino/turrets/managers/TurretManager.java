@@ -39,6 +39,11 @@ public class TurretManager {
     }
 
     public void loadTurrets() {
+        stopAllTasks();
+        plugin.getHologramManager().removeAllHolograms();
+        turrets.clear();
+        playerTurrets.clear();
+
         List<Turret> loadedTurrets = plugin.getDatabaseManager().loadTurrets();
         for (Turret turret : loadedTurrets) {
             turrets.put(turret.getId(), turret);
