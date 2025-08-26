@@ -14,6 +14,7 @@ public class TurretIndividualTask extends BukkitRunnable {
     private final Turrets plugin;
     private final WeakReference<Turret> turretRef;
     private int soundTicks = 0;
+    private int hologramCheckTicks = 0;
     private static final Particle.DustOptions ORANGE_DUST = new Particle.DustOptions(Color.ORANGE, 1.0f);
     private static final Particle.DustOptions YELLOW_DUST = new Particle.DustOptions(Color.YELLOW, 1.2f);
 
@@ -32,6 +33,13 @@ public class TurretIndividualTask extends BukkitRunnable {
         }
 
         soundTicks++;
+        hologramCheckTicks++;
+
+        if (hologramCheckTicks >= 100) {
+            plugin.getHologramManager().updateHologram(turret);
+            hologramCheckTicks = 0;
+        }
+
         if (soundTicks >= 200) {
             Location turretLoc = turret.getLocation().clone().add(0.5, 0.5, 0.5);
             turretLoc.getWorld().playSound(turretLoc, Sound.BLOCK_BEACON_AMBIENT, 0.15f, 0.5f);

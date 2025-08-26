@@ -47,6 +47,7 @@ public class TurretPlaceListener implements Listener {
         }
 
         Block block = event.getBlock();
+        plugin.getHologramManager().cleanupDuplicates(block.getLocation());
         plugin.getTurretManager().createTurret(player, block.getLocation(), item);
         player.sendMessage(plugin.getMessageManager().getMessage("turret.placed"));
     }

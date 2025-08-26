@@ -48,6 +48,7 @@ public class TurretManager {
         for (Turret turret : loadedTurrets) {
             turrets.put(turret.getId(), turret);
             playerTurrets.computeIfAbsent(turret.getOwnerId(), k -> new ArrayList<>()).add(turret.getId());
+            plugin.getHologramManager().cleanupDuplicates(turret.getLocation());
             plugin.getHologramManager().createHologram(turret);
             startTurretTask(turret);
         }
