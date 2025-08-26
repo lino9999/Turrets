@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -67,6 +68,20 @@ public class GuiManager implements Listener {
         ));
         ammoItem.setItemMeta(ammoMeta);
 
+        ItemStack targetModeItem = new ItemStack(turret.getTargetMode() == Turret.TargetMode.ALL_ENTITIES ? Material.IRON_SWORD : Material.WOODEN_SWORD);
+        ItemMeta targetMeta = targetModeItem.getItemMeta();
+        targetMeta.setDisplayName("§6Target Mode");
+        targetMeta.setLore(Arrays.asList(
+                "",
+                "§7Current: §e" + turret.getTargetMode().getDisplayName(),
+                "",
+                "§8• §fAll Entities §7- Attacks all mobs and players",
+                "§8• §fHostile Only §7- Only attacks hostile mobs",
+                "",
+                "§eClick to toggle!"
+        ));
+        targetModeItem.setItemMeta(targetMeta);
+
         ItemStack removeItem = new ItemStack(Material.BARRIER);
         ItemMeta removeMeta = removeItem.getItemMeta();
         removeMeta.setDisplayName("§cRemove Turret");
@@ -77,9 +92,10 @@ public class GuiManager implements Listener {
         ));
         removeItem.setItemMeta(removeMeta);
 
-        gui.setItem(11, infoItem);
-        gui.setItem(13, ammoItem);
-        gui.setItem(15, removeItem);
+        gui.setItem(10, infoItem);
+        gui.setItem(12, ammoItem);
+        gui.setItem(14, targetModeItem);
+        gui.setItem(16, removeItem);
 
         openGuis.put(player.getUniqueId(), turret.getId());
         player.openInventory(gui);
@@ -99,6 +115,10 @@ public class GuiManager implements Listener {
 
         event.setCancelled(true);
 
+        if (event.getClickedInventory() == null || event.getClickedInventory().getType() != InventoryType.CHEST) {
+            return;
+        }
+
         Turret turret = plugin.getTurretManager().getTurret(turretId);
         if (turret == null) {
             player.closeInventory();
@@ -107,66 +127,110 @@ public class GuiManager implements Listener {
 
         int slot = event.getSlot();
 
-        if (slot == 13) {
-            int nuggetCount = 0;
+        if (slot == 12) {
+            handleAmmoReload(player, turret);
+        } else if (slot == 14) {
+            handleTargetModeToggle(player, turret);
+        } else if (slot == 16) {
+            handleTurretRemoval(player, turret);
+        }
+    }
+
+    private void handleAmmoReload(Player player, Turret turret) {
+        int nuggetCount = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == Material.GOLD_NUGGET) {
+                nuggetCount += item.getAmount();
+            }
+        }
+
+        if (nuggetCount == 0) {
+            player.sendMessage(plugin.getMessageManager().getMessage("turret.no_ammo"));
+            return;
+        }
+
+        int maxAmmo = turret.getMaxAmmo();
+        int currentAmmo = turret.getAmmo();
+        int needed = maxAmmo - currentAmmo;
+        int toUse = Math.min(needed, nuggetCount);
+
+        if (toUse > 0) {
+            int remaining = toUse;
             for (ItemStack item : player.getInventory().getContents()) {
                 if (item != null && item.getType() == Material.GOLD_NUGGET) {
-                    nuggetCount += item.getAmount();
-                }
-            }
-
-            if (nuggetCount == 0) {
-                player.sendMessage(plugin.getMessageManager().getMessage("turret.no_ammo"));
-                return;
-            }
-
-            int maxAmmo = turret.getMaxAmmo();
-            int currentAmmo = turret.getAmmo();
-            int needed = maxAmmo - currentAmmo;
-            int toUse = Math.min(needed, nuggetCount);
-
-            if (toUse > 0) {
-                int remaining = toUse;
-                for (ItemStack item : player.getInventory().getContents()) {
-                    if (item != null && item.getType() == Material.GOLD_NUGGET) {
-                        int amount = item.getAmount();
-                        if (amount <= remaining) {
-                            item.setAmount(0);
-                            remaining -= amount;
-                        } else {
-                            item.setAmount(amount - remaining);
-                            remaining = 0;
-                        }
-                        if (remaining == 0) break;
+                    int amount = item.getAmount();
+                    if (amount <= remaining) {
+                        item.setAmount(0);
+                        remaining -= amount;
+                    } else {
+                        item.setAmount(amount - remaining);
+                        remaining = 0;
                     }
+                    if (remaining == 0) break;
                 }
-
-                turret.setAmmo(currentAmmo + toUse);
-                plugin.getHologramManager().updateHologram(turret);
-                plugin.getTurretManager().saveTurrets();
-                player.sendMessage(plugin.getMessageManager().getMessage("turret.reloaded", "{amount}", String.valueOf(toUse)));
-                player.closeInventory();
-            }
-        } else if (slot == 15) {
-            ItemStack turretItem = plugin.getTurretManager().createTurretItem(
-                    turret.getLevel(),
-                    turret.getKills(),
-                    turret.getAmmo()
-            );
-
-            if (player.getInventory().firstEmpty() != -1) {
-                player.getInventory().addItem(turretItem);
-            } else {
-                player.getWorld().dropItemNaturally(player.getLocation(), turretItem);
             }
 
-            plugin.getTurretManager().removeTurret(turretId);
-            Location loc = turret.getLocation();
-            loc.getBlock().setType(Material.AIR);
-
-            player.sendMessage(plugin.getMessageManager().getMessage("turret.removed"));
+            turret.setAmmo(currentAmmo + toUse);
+            plugin.getHologramManager().updateHologram(turret);
+            plugin.getTurretManager().saveTurrets();
+            player.sendMessage(plugin.getMessageManager().getMessage("turret.reloaded", "{amount}", String.valueOf(toUse)));
             player.closeInventory();
         }
+    }
+
+    private void handleTargetModeToggle(Player player, Turret turret) {
+        Turret.TargetMode currentMode = turret.getTargetMode();
+        Turret.TargetMode newMode = currentMode == Turret.TargetMode.ALL_ENTITIES
+                ? Turret.TargetMode.HOSTILE_ONLY
+                : Turret.TargetMode.ALL_ENTITIES;
+
+        turret.setTargetMode(newMode);
+        plugin.getTurretManager().saveTurrets();
+
+        String modeMessage = plugin.getMessageManager().applyGradient(
+                "Target mode changed to: " + newMode.getDisplayName(),
+                "#00ff00", "#00ffff"
+        );
+        player.sendMessage(modeMessage);
+
+        Inventory currentInv = player.getOpenInventory().getTopInventory();
+
+        ItemStack targetModeItem = new ItemStack(newMode == Turret.TargetMode.ALL_ENTITIES ? Material.IRON_SWORD : Material.WOODEN_SWORD);
+        ItemMeta targetMeta = targetModeItem.getItemMeta();
+        targetMeta.setDisplayName("§6Target Mode");
+        targetMeta.setLore(Arrays.asList(
+                "",
+                "§7Current: §e" + newMode.getDisplayName(),
+                "",
+                "§8• §fAll Entities §7- Attacks all mobs and players",
+                "§8• §fHostile Only §7- Only attacks hostile mobs",
+                "",
+                "§eClick to toggle!"
+        ));
+        targetModeItem.setItemMeta(targetMeta);
+
+        currentInv.setItem(14, targetModeItem);
+    }
+
+    private void handleTurretRemoval(Player player, Turret turret) {
+        ItemStack turretItem = plugin.getTurretManager().createTurretItem(
+                turret.getLevel(),
+                turret.getKills(),
+                turret.getAmmo()
+        );
+
+        if (player.getInventory().firstEmpty() != -1) {
+            player.getInventory().addItem(turretItem);
+        } else {
+            player.getWorld().dropItemNaturally(player.getLocation(), turretItem);
+        }
+
+        plugin.getTurretManager().removeTurret(turret.getId());
+        Location loc = turret.getLocation();
+        loc.getBlock().setType(Material.AIR);
+
+        player.sendMessage(plugin.getMessageManager().getMessage("turret.removed"));
+        player.closeInventory();
     }
 
     @EventHandler

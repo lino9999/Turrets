@@ -35,7 +35,7 @@ public class TurretIndividualTask extends BukkitRunnable {
         soundTicks++;
         hologramCheckTicks++;
 
-        if (hologramCheckTicks >= 100) {
+        if (hologramCheckTicks >= 40) {
             plugin.getHologramManager().updateHologram(turret);
             hologramCheckTicks = 0;
         }

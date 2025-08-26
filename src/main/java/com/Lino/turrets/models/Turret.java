@@ -14,6 +14,22 @@ public class Turret {
     private int kills;
     private int ammo;
     private long lastShot;
+    private TargetMode targetMode;
+
+    public enum TargetMode {
+        ALL_ENTITIES("All Entities"),
+        HOSTILE_ONLY("Hostile Only");
+
+        private final String displayName;
+
+        TargetMode(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
 
     public Turret(UUID ownerId, String ownerName, Location location) {
         this.id = UUID.randomUUID();
@@ -24,6 +40,7 @@ public class Turret {
         this.kills = 0;
         this.ammo = getMaxAmmo();
         this.lastShot = 0;
+        this.targetMode = TargetMode.ALL_ENTITIES;
     }
 
     public Turret(UUID ownerId, String ownerName, Location location, int level, int kills, int ammo) {
@@ -35,6 +52,7 @@ public class Turret {
         this.kills = kills;
         this.ammo = ammo;
         this.lastShot = 0;
+        this.targetMode = TargetMode.ALL_ENTITIES;
     }
 
     public Turret(UUID id, UUID ownerId, String ownerName, Location location, int level, int kills, int ammo) {
@@ -46,6 +64,19 @@ public class Turret {
         this.kills = kills;
         this.ammo = ammo;
         this.lastShot = 0;
+        this.targetMode = TargetMode.ALL_ENTITIES;
+    }
+
+    public Turret(UUID id, UUID ownerId, String ownerName, Location location, int level, int kills, int ammo, TargetMode targetMode) {
+        this.id = id;
+        this.ownerId = ownerId;
+        this.ownerName = ownerName;
+        this.location = location;
+        this.level = level;
+        this.kills = kills;
+        this.ammo = ammo;
+        this.lastShot = 0;
+        this.targetMode = targetMode != null ? targetMode : TargetMode.ALL_ENTITIES;
     }
 
     public UUID getId() {
@@ -94,6 +125,14 @@ public class Turret {
         this.level = Math.min(level, 20);
     }
 
+    public TargetMode getTargetMode() {
+        return targetMode;
+    }
+
+    public void setTargetMode(TargetMode targetMode) {
+        this.targetMode = targetMode;
+    }
+
     public double getDamage() {
         return Turrets.getInstance().getConfigManager().getDamageForLevel(level);
     }
@@ -118,6 +157,23 @@ public class Turret {
         lastShot = System.currentTimeMillis();
     }
 
+    private boolean isHostileMob(Entity entity) {
+        return entity instanceof Monster ||
+                entity instanceof Slime ||
+                entity instanceof Ghast ||
+                entity instanceof Phantom ||
+                entity instanceof Shulker ||
+                entity instanceof EnderDragon ||
+                entity instanceof Wither ||
+                entity instanceof Warden ||
+                entity instanceof Hoglin ||
+                entity instanceof Piglin ||
+                entity instanceof PiglinBrute ||
+                entity instanceof Ravager ||
+                entity instanceof Guardian ||
+                entity instanceof ElderGuardian;
+    }
+
     public LivingEntity findNearestTarget() {
         double range = getRange();
         LivingEntity nearest = null;
@@ -135,12 +191,20 @@ public class Turret {
                 if (player.getUniqueId().equals(ownerId)) continue;
                 if (player.getGameMode() == org.bukkit.GameMode.CREATIVE ||
                         player.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;
+
+                if (targetMode == TargetMode.HOSTILE_ONLY) continue;
             }
 
             if (living instanceof ArmorStand ||
                     living instanceof Villager ||
                     living.isDead() ||
                     !living.isValid()) continue;
+
+            if (targetMode == TargetMode.HOSTILE_ONLY) {
+                if (!(living instanceof Player) && !isHostileMob(living)) {
+                    continue;
+                }
+            }
 
             double distance = turretCenter.distance(living.getLocation());
             if (distance <= range && distance < minDistance) {

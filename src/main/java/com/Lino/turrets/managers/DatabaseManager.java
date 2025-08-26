@@ -46,11 +46,17 @@ public class DatabaseManager {
                 "z REAL NOT NULL," +
                 "level INTEGER NOT NULL," +
                 "kills INTEGER NOT NULL," +
-                "ammo INTEGER NOT NULL" +
+                "ammo INTEGER NOT NULL," +
+                "target_mode TEXT DEFAULT 'ALL_ENTITIES'" +
                 ")";
 
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
+
+            try {
+                stmt.execute("ALTER TABLE turrets ADD COLUMN target_mode TEXT DEFAULT 'ALL_ENTITIES'");
+            } catch (SQLException ignored) {
+            }
         }
     }
 
@@ -62,7 +68,7 @@ public class DatabaseManager {
                 stmt.execute("DELETE FROM turrets");
             }
 
-            String sql = "INSERT INTO turrets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO turrets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                 for (Turret turret : turrets) {
                     pstmt.setString(1, turret.getId().toString());
@@ -75,6 +81,7 @@ public class DatabaseManager {
                     pstmt.setInt(8, turret.getLevel());
                     pstmt.setInt(9, turret.getKills());
                     pstmt.setInt(10, turret.getAmmo());
+                    pstmt.setString(11, turret.getTargetMode().name());
                     pstmt.executeUpdate();
                 }
             }
@@ -115,9 +122,18 @@ public class DatabaseManager {
                 int kills = rs.getInt("kills");
                 int ammo = rs.getInt("ammo");
 
+                Turret.TargetMode targetMode = Turret.TargetMode.ALL_ENTITIES;
+                try {
+                    String mode = rs.getString("target_mode");
+                    if (mode != null) {
+                        targetMode = Turret.TargetMode.valueOf(mode);
+                    }
+                } catch (Exception ignored) {
+                }
+
                 if (Bukkit.getWorld(worldName) != null) {
                     Location location = new Location(Bukkit.getWorld(worldName), x, y, z);
-                    Turret turret = new Turret(id, ownerId, ownerName, location, level, kills, ammo);
+                    Turret turret = new Turret(id, ownerId, ownerName, location, level, kills, ammo, targetMode);
                     turrets.add(turret);
                 }
             }

@@ -13,7 +13,24 @@ import java.util.UUID;
 
 public class HologramManager {
     private final Turrets plugin;
-    private final Map<UUID, ArmorStand[]> holograms;
+    private final Map<UUID, HologramData> holograms;
+
+    private static class HologramData {
+        ArmorStand nameStand;
+        ArmorStand ammoStand;
+        Location baseLocation;
+
+        HologramData(ArmorStand nameStand, ArmorStand ammoStand, Location baseLocation) {
+            this.nameStand = nameStand;
+            this.ammoStand = ammoStand;
+            this.baseLocation = baseLocation;
+        }
+
+        boolean isValid() {
+            return nameStand != null && !nameStand.isDead() &&
+                    ammoStand != null && !ammoStand.isDead();
+        }
+    }
 
     public HologramManager(Turrets plugin) {
         this.plugin = plugin;
@@ -21,51 +38,56 @@ public class HologramManager {
     }
 
     public void createHologram(Turret turret) {
-        ArmorStand[] existing = holograms.get(turret.getId());
-        if (existing != null && existing.length == 2) {
-            if (existing[0] != null && !existing[0].isDead() && existing[1] != null && !existing[1].isDead()) {
-                updateHologramText(existing[0], existing[1], turret);
-                return;
-            }
+        HologramData existing = holograms.get(turret.getId());
+        if (existing != null && existing.isValid()) {
+            updateHologramText(existing.nameStand, existing.ammoStand, turret);
+            return;
         }
 
         removeHologram(turret.getId());
 
-        Location loc = turret.getLocation().clone().add(0.5, 2, 0.5);
+        Location baseLoc = turret.getLocation().clone();
+        Location nameLoc = baseLoc.clone().add(0.5, 2, 0.5);
+        Location ammoLoc = baseLoc.clone().add(0.5, 1.7, 0.5);
 
-        ArmorStand nameStand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
-        nameStand.setCustomNameVisible(true);
-        nameStand.setGravity(false);
-        nameStand.setVisible(false);
-        nameStand.setMarker(true);
-        nameStand.setInvulnerable(true);
-        nameStand.setSmall(false);
-        nameStand.setBasePlate(false);
+        ArmorStand nameStand = (ArmorStand) nameLoc.getWorld().spawnEntity(nameLoc, EntityType.ARMOR_STAND);
+        setupArmorStand(nameStand);
 
-        ArmorStand ammoStand = (ArmorStand) loc.getWorld().spawnEntity(loc.clone().subtract(0, 0.3, 0), EntityType.ARMOR_STAND);
-        ammoStand.setCustomNameVisible(true);
-        ammoStand.setGravity(false);
-        ammoStand.setVisible(false);
-        ammoStand.setMarker(true);
-        ammoStand.setInvulnerable(true);
-        ammoStand.setSmall(false);
-        ammoStand.setBasePlate(false);
+        ArmorStand ammoStand = (ArmorStand) ammoLoc.getWorld().spawnEntity(ammoLoc, EntityType.ARMOR_STAND);
+        setupArmorStand(ammoStand);
 
         updateHologramText(nameStand, ammoStand, turret);
 
-        holograms.put(turret.getId(), new ArmorStand[]{nameStand, ammoStand});
+        holograms.put(turret.getId(), new HologramData(nameStand, ammoStand, baseLoc));
+    }
+
+    private void setupArmorStand(ArmorStand stand) {
+        stand.setCustomNameVisible(true);
+        stand.setGravity(false);
+        stand.setVisible(false);
+        stand.setMarker(true);
+        stand.setInvulnerable(true);
+        stand.setSmall(false);
+        stand.setBasePlate(false);
+        stand.setCanPickupItems(false);
+        stand.setCollidable(false);
     }
 
     public void updateHologram(Turret turret) {
-        ArmorStand[] stands = holograms.get(turret.getId());
-        if (stands != null && stands.length == 2) {
-            if (stands[0] != null && !stands[0].isDead() && stands[1] != null && !stands[1].isDead()) {
-                updateHologramText(stands[0], stands[1], turret);
-                return;
-            }
+        HologramData data = holograms.get(turret.getId());
+
+        if (data == null || !data.isValid()) {
+            createHologram(turret);
+            return;
         }
 
-        createHologram(turret);
+        Location expectedLoc = turret.getLocation();
+        if (!data.baseLocation.getBlock().equals(expectedLoc.getBlock())) {
+            createHologram(turret);
+            return;
+        }
+
+        updateHologramText(data.nameStand, data.ammoStand, turret);
     }
 
     private void updateHologramText(ArmorStand nameStand, ArmorStand ammoStand, Turret turret) {
@@ -74,7 +96,11 @@ public class HologramManager {
         }
 
         String gradient = plugin.getMessageManager().applyGradient(turret.getOwnerName(), "#00ff00", "#ffff00");
-        nameStand.setCustomName(gradient + " §7[§6Lv." + turret.getLevel() + "§7]");
+        String nameText = gradient + " §7[§6Lv." + turret.getLevel() + "§7]";
+
+        if (!nameText.equals(nameStand.getCustomName())) {
+            nameStand.setCustomName(nameText);
+        }
 
         int ammo = turret.getAmmo();
         int maxAmmo = turret.getMaxAmmo();
@@ -91,27 +117,32 @@ public class HologramManager {
         }
         bar.append("§8] §e").append(ammo).append("/").append(maxAmmo);
 
-        ammoStand.setCustomName(bar.toString());
+        String ammoText = bar.toString();
+        if (!ammoText.equals(ammoStand.getCustomName())) {
+            ammoStand.setCustomName(ammoText);
+        }
     }
 
     public void removeHologram(UUID turretId) {
-        ArmorStand[] stands = holograms.remove(turretId);
-        if (stands != null) {
-            for (ArmorStand stand : stands) {
-                if (stand != null && !stand.isDead()) {
-                    stand.remove();
-                }
+        HologramData data = holograms.remove(turretId);
+        if (data != null) {
+            if (data.nameStand != null && !data.nameStand.isDead()) {
+                data.nameStand.remove();
+            }
+            if (data.ammoStand != null && !data.ammoStand.isDead()) {
+                data.ammoStand.remove();
             }
         }
     }
 
     public void removeAllHolograms() {
-        for (ArmorStand[] stands : holograms.values()) {
-            if (stands != null) {
-                for (ArmorStand stand : stands) {
-                    if (stand != null && !stand.isDead()) {
-                        stand.remove();
-                    }
+        for (HologramData data : holograms.values()) {
+            if (data != null) {
+                if (data.nameStand != null && !data.nameStand.isDead()) {
+                    data.nameStand.remove();
+                }
+                if (data.ammoStand != null && !data.ammoStand.isDead()) {
+                    data.ammoStand.remove();
                 }
             }
         }
@@ -124,8 +155,8 @@ public class HologramManager {
                 ArmorStand stand = (ArmorStand) entity;
                 if (!stand.isVisible() && stand.isMarker()) {
                     boolean isTracked = false;
-                    for (ArmorStand[] tracked : holograms.values()) {
-                        if (tracked != null && (stand.equals(tracked[0]) || stand.equals(tracked[1]))) {
+                    for (HologramData data : holograms.values()) {
+                        if (data != null && (stand.equals(data.nameStand) || stand.equals(data.ammoStand))) {
                             isTracked = true;
                             break;
                         }
@@ -136,5 +167,10 @@ public class HologramManager {
                 }
             }
         }
+    }
+
+    public void forceRefresh(Turret turret) {
+        removeHologram(turret.getId());
+        createHologram(turret);
     }
 }
