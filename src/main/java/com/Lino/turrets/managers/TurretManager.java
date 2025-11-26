@@ -54,8 +54,21 @@ public class TurretManager {
         }
     }
 
+    // Metodo overload per compatibilità (chiama asincrono di default)
     public void saveTurrets() {
-        plugin.getDatabaseManager().saveTurrets(new ArrayList<>(turrets.values()));
+        saveTurrets(true);
+    }
+
+    // Metodo principale con scelta sincrono/asincrono
+    public void saveTurrets(boolean async) {
+        List<Turret> toSave = new ArrayList<>(turrets.values());
+        if (async) {
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () ->
+                    plugin.getDatabaseManager().saveTurrets(toSave)
+            );
+        } else {
+            plugin.getDatabaseManager().saveTurrets(toSave);
+        }
     }
 
     private void startTurretTask(Turret turret) {
@@ -104,7 +117,7 @@ public class TurretManager {
         playerTurrets.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>()).add(turret.getId());
         plugin.getHologramManager().createHologram(turret);
         startTurretTask(turret);
-        saveTurrets();
+        saveTurrets(true);
         return turret;
     }
 
@@ -124,7 +137,7 @@ public class TurretManager {
             }
             plugin.getHologramManager().removeHologram(turretId);
             stopTurretTask(turretId);
-            saveTurrets();
+            saveTurrets(true);
         }
     }
 
@@ -168,16 +181,13 @@ public class TurretManager {
         ItemStack item = new ItemStack(Material.DISPENSER);
         ItemMeta meta = item.getItemMeta();
 
-        String name = plugin.getMessageManager().applyGradient("Turret", "#ff8800", "#ffff00");
-        meta.setDisplayName(name + " §7[§eLv." + level + "§7]");
+        String name = plugin.getMessageManager().getMessage("item.name", "{level}", String.valueOf(level));
+        meta.setDisplayName(name);
 
-        List<String> lore = new ArrayList<>();
-        lore.add("§7Place to deploy");
-        lore.add("§7Right-click to manage");
-        lore.add("");
-        lore.add("§7Level: §e" + level + "/20");
-        lore.add("§7Kills: §c" + kills);
-        lore.add("§7Ammo: §a" + ammo);
+        List<String> lore = plugin.getMessageManager().getList("item.lore",
+                "{level}", String.valueOf(level),
+                "{kills}", String.valueOf(kills),
+                "{ammo}", String.valueOf(ammo));
 
         meta.setLore(lore);
 
@@ -205,7 +215,7 @@ public class TurretManager {
         if (turret.getKills() >= killsRequired) {
             turret.setLevel(currentLevel + 1);
             plugin.getHologramManager().updateHologram(turret);
-            saveTurrets();
+            saveTurrets(true);
 
             Player owner = plugin.getServer().getPlayer(turret.getOwnerId());
             if (owner != null && owner.isOnline()) {

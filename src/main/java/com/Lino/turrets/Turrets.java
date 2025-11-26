@@ -40,7 +40,7 @@ public class Turrets extends JavaPlugin {
     @Override
     public void onDisable() {
         turretManager.stopAllTasks();
-        turretManager.saveTurrets();
+        turretManager.saveTurrets(false);
         hologramManager.removeAllHolograms();
         databaseManager.close();
     }

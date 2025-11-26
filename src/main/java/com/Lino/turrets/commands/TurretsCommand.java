@@ -35,13 +35,13 @@ public class TurretsCommand implements CommandExecutor, TabCompleter {
                 }
 
                 if (args.length < 4) {
-                    sender.sendMessage("§cUsage: /turrets give <player> <level> <amount>");
+                    sender.sendMessage(plugin.getMessageManager().getMessage("command.usage"));
                     return true;
                 }
 
                 Player target = Bukkit.getPlayer(args[1]);
                 if (target == null) {
-                    sender.sendMessage("§cPlayer not found!");
+                    sender.sendMessage(plugin.getMessageManager().getMessage("command.player_not_found"));
                     return true;
                 }
 
@@ -51,17 +51,17 @@ public class TurretsCommand implements CommandExecutor, TabCompleter {
                     level = Integer.parseInt(args[2]);
                     amount = Integer.parseInt(args[3]);
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("§cLevel and amount must be numbers!");
+                    sender.sendMessage(plugin.getMessageManager().getMessage("command.not_number"));
                     return true;
                 }
 
                 if (level < 1 || level > 20) {
-                    sender.sendMessage("§cLevel must be between 1 and 20!");
+                    sender.sendMessage(plugin.getMessageManager().getMessage("command.invalid_level"));
                     return true;
                 }
 
                 if (amount < 1 || amount > 64) {
-                    sender.sendMessage("§cAmount must be between 1 and 64!");
+                    sender.sendMessage(plugin.getMessageManager().getMessage("command.invalid_amount"));
                     return true;
                 }
 
@@ -69,10 +69,15 @@ public class TurretsCommand implements CommandExecutor, TabCompleter {
                     target.getInventory().addItem(plugin.getTurretManager().createTurretItem(level, 0, plugin.getConfigManager().getAmmoForLevel(level)));
                 }
 
-                String giveMsg = plugin.getMessageManager().applyGradient("Gave " + amount + " level " + level + " turret(s) to " + target.getName() + "!", "#00ff00", "#00ffff");
+                String giveMsg = plugin.getMessageManager().getMessage("command.give_sender",
+                        "{amount}", String.valueOf(amount),
+                        "{level}", String.valueOf(level),
+                        "{player}", target.getName());
                 sender.sendMessage(giveMsg);
 
-                String receiveMsg = plugin.getMessageManager().applyGradient("You received " + amount + " level " + level + " turret(s)!", "#00ff00", "#ffff00");
+                String receiveMsg = plugin.getMessageManager().getMessage("command.give_receiver",
+                        "{amount}", String.valueOf(amount),
+                        "{level}", String.valueOf(level));
                 target.sendMessage(receiveMsg);
                 return true;
 
@@ -93,10 +98,9 @@ public class TurretsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void sendHelp(CommandSender sender) {
-        String title = plugin.getMessageManager().applyGradient("Turrets Commands:", "#ff8800", "#ffff00");
-        sender.sendMessage(title);
-        sender.sendMessage("§e/turrets give <player> <level> <amount> §7- Give turret to player");
-        sender.sendMessage("§e/turrets reload §7- Reload configuration");
+        sender.sendMessage(plugin.getMessageManager().getMessage("command.help.header"));
+        sender.sendMessage(plugin.getMessageManager().getMessage("command.help.give"));
+        sender.sendMessage(plugin.getMessageManager().getMessage("command.help.reload"));
     }
 
     @Override

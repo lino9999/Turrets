@@ -8,6 +8,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,6 +59,21 @@ public class MessageManager {
         }
 
         return translateColors(message);
+    }
+
+    public List<String> getList(String path, String... replacements) {
+        List<String> messages = messagesConfig.getStringList(path);
+        List<String> result = new ArrayList<>();
+
+        for (String message : messages) {
+            for (int i = 0; i < replacements.length; i += 2) {
+                if (i + 1 < replacements.length) {
+                    message = message.replace(replacements[i], replacements[i + 1]);
+                }
+            }
+            result.add(translateColors(message));
+        }
+        return result;
     }
 
     private String translateColors(String message) {

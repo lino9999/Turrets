@@ -9,6 +9,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
@@ -85,6 +87,30 @@ public class TurretPlaceListener implements Listener {
                 Turret turret = plugin.getTurretManager().getTurretAtLocation(block.getLocation());
                 if (turret != null) {
                     iterator.remove();
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        for (Block block : event.getBlocks()) {
+            if (block.getType() == Material.DISPENSER) {
+                if (plugin.getTurretManager().getTurretAtLocation(block.getLocation()) != null) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        for (Block block : event.getBlocks()) {
+            if (block.getType() == Material.DISPENSER) {
+                if (plugin.getTurretManager().getTurretAtLocation(block.getLocation()) != null) {
+                    event.setCancelled(true);
+                    return;
                 }
             }
         }

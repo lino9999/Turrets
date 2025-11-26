@@ -1,9 +1,10 @@
 name: Turrets
-version: '1.9'
+version: '2.0'
 main: com.Lino.turrets.Turrets
 api-version: '1.21'
 author: Lino
 description: Advanced turret system for Minecraft servers
+depend: [DecentHolograms]
 
 commands:
   turrets:

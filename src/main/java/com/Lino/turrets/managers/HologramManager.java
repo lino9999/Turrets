@@ -96,7 +96,9 @@ public class HologramManager {
         }
 
         String gradient = plugin.getMessageManager().applyGradient(turret.getOwnerName(), "#00ff00", "#ffff00");
-        String nameText = gradient + " §7[§6Lv." + turret.getLevel() + "§7]";
+        String nameText = plugin.getMessageManager().getMessage("hologram.name",
+                "{player_gradient}", gradient,
+                "{level}", String.valueOf(turret.getLevel()));
 
         if (!nameText.equals(nameStand.getCustomName())) {
             nameStand.setCustomName(nameText);
@@ -107,17 +109,20 @@ public class HologramManager {
         int barLength = 20;
         int filled = (int) ((double) ammo / maxAmmo * barLength);
 
-        StringBuilder bar = new StringBuilder("§8[");
+        StringBuilder barBuilder = new StringBuilder();
         for (int i = 0; i < barLength; i++) {
             if (i < filled) {
-                bar.append("§a|");
+                barBuilder.append("§a|");
             } else {
-                bar.append("§7|");
+                barBuilder.append("§7|");
             }
         }
-        bar.append("§8] §e").append(ammo).append("/").append(maxAmmo);
 
-        String ammoText = bar.toString();
+        String ammoText = plugin.getMessageManager().getMessage("hologram.ammo_bar",
+                "{bar}", barBuilder.toString(),
+                "{current}", String.valueOf(ammo),
+                "{max}", String.valueOf(maxAmmo));
+
         if (!ammoText.equals(ammoStand.getCustomName())) {
             ammoStand.setCustomName(ammoText);
         }

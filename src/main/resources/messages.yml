@@ -13,3 +13,75 @@ turret:
   no_ammo: "#ff0000You don't have any gold nuggets to reload!"
   reloaded: "<gradient:#00ff00:#00ffff>Reloaded {amount} bullets!</gradient>"
   killed_player: "<gradient:#ff0000:#ffff00>{owner}'s turret killed {player}!</gradient>"
+  target_mode_changed: "<gradient:#00ff00:#00ffff>Target mode changed to: {mode}</gradient>"
+
+command:
+  usage: "§cUsage: /turrets give <player> <level> <amount>"
+  player_not_found: "§cPlayer not found!"
+  not_number: "§cLevel and amount must be numbers!"
+  invalid_level: "§cLevel must be between 1 and 20!"
+  invalid_amount: "§cAmount must be between 1 and 64!"
+  give_sender: "<gradient:#00ff00:#00ffff>Gave {amount} level {level} turret(s) to {player}!</gradient>"
+  give_receiver: "<gradient:#00ff00:#ffff00>You received {amount} level {level} turret(s)!</gradient>"
+  help:
+    header: "<gradient:#ff8800:#ffff00>Turrets Commands:</gradient>"
+    give: "§e/turrets give <player> <level> <amount> §7- Give turret to player"
+    reload: "§e/turrets reload §7- Reload configuration"
+
+item:
+  name: "<gradient:#ff8800:#ffff00>Turret</gradient> §7[§eLv.{level}§7]"
+  lore:
+    - "§7Place to deploy"
+    - "§7Right-click to manage"
+    - ""
+    - "§7Level: §e{level}/20"
+    - "§7Kills: §c{kills}"
+    - "§7Ammo: §a{ammo}"
+
+hologram:
+  name: "{player_gradient} §7[§6Lv.{level}§7]"
+  ammo_bar: "§8[{bar}§8] §e{current}/{max}"
+
+gui:
+  title: "<gradient:#ff8800:#ffff00>Turret Management</gradient>"
+  info:
+    name: "<gradient:#00ff00:#00ffff>Turret Information</gradient>"
+    lore:
+      - "§7Owner: §a{owner}"
+      - "§7Level: §e{level}/20"
+      - "§7Kills: §c{kills}"
+      - "§7Damage: §c{damage}"
+      - "§7Range: §b{range} blocks"
+      - "§7Fire Rate: §d{rate} shots/sec"
+    next_level:
+      - ""
+      - "§7Next level at: §e{kills} kills"
+    max_level:
+      - ""
+      - "<gradient:#ffff00:#ff00ff>MAX LEVEL REACHED!</gradient>"
+  ammo:
+    name: "§eAmmo Status"
+    lore:
+      - "§7Current: §a{current}/{max}"
+      - ""
+      - "§eClick to reload!"
+      - "§7Requires gold nuggets"
+  target:
+    name: "§6Target Mode"
+    lore:
+      - ""
+      - "§7Current: §e{mode}"
+      - ""
+      - "§8• §fAll Entities §7- Attacks all mobs and players"
+      - "§8• §fHostile Only §7- Only attacks hostile mobs"
+      - ""
+      - "§eClick to toggle!"
+    modes:
+      ALL_ENTITIES: "All Entities"
+      HOSTILE_ONLY: "Hostile Only"
+  remove:
+    name: "§cRemove Turret"
+    lore:
+      - "§7Click to remove this turret"
+      - "§aProgress will be saved!"
+      - "§c§lThis action cannot be undone!"
