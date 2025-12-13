@@ -45,6 +45,7 @@ public class HologramManager {
         }
 
         removeHologram(turret.getId());
+        cleanupDuplicates(turret.getLocation());
 
         Location baseLoc = turret.getLocation().clone();
         Location nameLoc = baseLoc.clone().add(0.5, 2, 0.5);

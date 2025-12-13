@@ -32,6 +32,10 @@ public class TurretIndividualTask extends BukkitRunnable {
             return;
         }
 
+        if (!turret.getLocation().getChunk().isLoaded()) {
+            return;
+        }
+
         soundTicks++;
         hologramCheckTicks++;
 
